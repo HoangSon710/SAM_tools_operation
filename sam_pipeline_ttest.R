@@ -97,71 +97,76 @@ for (file_path in csv_files) {
     # Perform SAM analysis
     cat("  - Running SAM analysis (100 permutations)...\n")
     
+    # Transform data for SAM: replace zeros/negatives with small value, then log2 transform
+    x_transformed <- x
+    x_transformed[x_transformed <= 0] <- 1  # Replace zero/negative with 1
+    x_transformed <- log2(x_transformed)
+    
+    # Impute missing values if needed
+    if (any(is.na(x_transformed))) {
+      cat("  - Imputing missing values with k-NN...\n")
+      x_transformed <- impute.knn(as.matrix(x_transformed))$data
+    }
+    
+    # Prepare SAM data object
+    samr_data <- list(
+      x = x_transformed,
+      y = groups,
+      geneid = as.character(1:nrow(x_transformed)),
+      genenames = genenames,
+      logged2 = TRUE
+    )
+    
+    # Run SAM algorithm
+    samr_obj <- samr(samr_data, resp.type = "Two class unpaired", nperms = 100)
+    
+    # Compute delta table
+    delta_table <- samr.compute.delta.table(samr_obj, min.foldchange = min_foldchange)
+    
+    # Get significant genes at specified delta
+    siggenes_obj <- samr.compute.siggenes.table(samr_obj, delta, samr_data, delta_table, 
+                                                 min.foldchange = min_foldchange)
+    
+    # Extract results
     n_genes <- nrow(x)
+    
+    # Calculate means and fold changes for all genes
+    mean_exp <- rowMeans(x[, exp_idx, drop = FALSE])
+    mean_ctrl <- rowMeans(x[, ctrl_idx, drop = FALSE])
+    foldchange <- mean_exp / mean_ctrl
+    log2fc <- log2(foldchange)
+    
+    # Create results dataframe
     results_df <- data.frame(
-      GeneID = character(n_genes),
-      GeneName = character(n_genes),
-      Mean_Exp = numeric(n_genes),
-      Mean_Ctrl = numeric(n_genes),
-      Log2FC = numeric(n_genes),
-      T_statistic = numeric(n_genes),
-      P_value = numeric(n_genes),
-      D_value = numeric(n_genes),
-      Significant = character(n_genes),
+      GeneID = as.character(geneid),
+      GeneName = as.character(genenames),
+      Mean_Exp = mean_exp,
+      Mean_Ctrl = mean_ctrl,
+      FoldChange = foldchange,
+      Log2FC = log2fc,
+      SAM_score = samr_obj$tt,
+      Q_value = NA,
+      Significant = "Not Significant",
       stringsAsFactors = FALSE
     )
     
-    for (i in 1:n_genes) {
-      exp_values <- x[i, exp_idx]
-      ctrl_values <- x[i, ctrl_idx]
-      
-      # Calculate means
-      mean_exp <- mean(exp_values, na.rm = TRUE)
-      mean_ctrl <- mean(ctrl_values, na.rm = TRUE)
-      
-      # Calculate log2 fold change
-      log2fc <- log2((mean_exp + 1) / (mean_ctrl + 1))  # Add pseudocount
-      
-      # Perform t-test
-      if (length(exp_values) > 1 && length(ctrl_values) > 1) {
-        t_result <- t.test(exp_values, ctrl_values)
-        t_stat <- as.numeric(t_result$statistic)
-        p_val <- t_result$p.value
-        
-        # Calculate d-value (effect size / standard error)
-        pooled_sd <- sqrt(((length(exp_values)-1)*var(exp_values) + 
-                          (length(ctrl_values)-1)*var(ctrl_values)) / 
-                         (length(exp_values) + length(ctrl_values) - 2))
-        d_val <- (mean_exp - mean_ctrl) / (pooled_sd + 1)  # Add constant to avoid division by zero
-      } else {
-        t_stat <- NA
-        p_val <- NA
-        d_val <- NA
+    # Mark significant genes from SAM
+    if (!is.null(siggenes_obj$genes.up) && nrow(siggenes_obj$genes.up) > 0) {
+      up_indices <- as.numeric(siggenes_obj$genes.up[, "Gene ID"])
+      up_indices <- up_indices[!is.na(up_indices)]  # Remove NA indices
+      if (length(up_indices) > 0) {
+        results_df$Significant[up_indices] <- "Positive Hit"
+        results_df$Q_value[up_indices] <- as.numeric(siggenes_obj$genes.up[, "q-value(%)"])
       }
-      
-      # Determine significance
-      sig_status <- "Not Significant"
-      if (!is.na(log2fc) && !is.na(d_val) && !is.infinite(log2fc)) {
-        if (abs(log2fc) >= log2fc_cutoff && abs(d_val) >= d_value_cutoff) {
-          if (log2fc > 0) {
-            sig_status <- "Positive Hit"
-          } else {
-            sig_status <- "Negative Hit"
-          }
-        }
+    }
+    
+    if (!is.null(siggenes_obj$genes.lo) && nrow(siggenes_obj$genes.lo) > 0) {
+      lo_indices <- as.numeric(siggenes_obj$genes.lo[, "Gene ID"])
+      lo_indices <- lo_indices[!is.na(lo_indices)]  # Remove NA indices
+      if (length(lo_indices) > 0) {
+        results_df$Significant[lo_indices] <- "Negative Hit"
+        results_df$Q_value[lo_indices] <- as.numeric(siggenes_obj$genes.lo[, "q-value(%)"])
       }
-      
-      results_df[i, ] <- list(
-        GeneID = as.character(geneid[i]),
-        GeneName = as.character(genenames[i]),
-        Mean_Exp = mean_exp,
-        Mean_Ctrl = mean_ctrl,
-        Log2FC = log2fc,
-        T_statistic = t_stat,
-        P_value = p_val,
-        D_value = d_val,
-        Significant = sig_status
-      )
     }
     
     # Count significant hits from SAM
@@ -442,24 +447,24 @@ html_content <- sprintf('
 </head>
 <body>
   <div class="container">
-    <h1>🔬 T-test Proteomics Analysis Report</h1>
+    <h1>🔬 SAM Proteomics Analysis Report</h1>
     <p class="timestamp">Generated: %s</p>
     
     <div class="info-box">
       <strong>Input Folder:</strong> %s<br>
       <strong>Output Folder:</strong> %s<br>
-      <strong>Log2 Fold Change Cutoff:</strong> ±%.2f<br>
-      <strong>D-value Cutoff:</strong> ±%.2f<br>
+      <strong>SAM Delta:</strong> %.2f<br>
+      <strong>Minimum Fold Change:</strong> %.2f<br>
       <strong>Files Processed:</strong> %d / %d
     </div>
 ',
   format(Sys.time(), "%%Y-%%m-%%d %%H:%%M:%%S"),
   input_folder,
   output_folder,
-  log2fc_cutoff,
-  d_value_cutoff,
+  delta,
+  min_foldchange,
   length(results),
-  length(excel_files)
+  length(csv_files)
 )
 
 # Add summary statistics
