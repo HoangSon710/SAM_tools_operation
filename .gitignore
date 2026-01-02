@@ -20,12 +20,12 @@ build/
 
 # Data and results
 results/
-ttest_results/
-sam_results/
+# ttest_results/  # Uncommenting to include example results in repository
+# sam_results/    # Uncommenting to include example results in repository
 *.xlsx
 !example_data.xlsx
-*.csv
-*.RData
+# *.csv           # Uncommenting to include result CSVs in repository
+# *.RData         # Uncommenting to include R workspace in repository
 
 # Temporary files
 *.tmp

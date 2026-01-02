@@ -1,0 +1,238 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>SAM Proteomics Analysis Report</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2c3e50;
+      border-bottom: 3px solid #3498db;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #34495e;
+      margin-top: 30px;
+      border-left: 4px solid #3498db;
+      padding-left: 10px;
+    }
+    h3 {
+      color: #7f8c8d;
+    }
+    .info-box {
+      background-color: #ecf0f1;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 15px 0;
+    }
+    .success {
+      color: #27ae60;
+      font-weight: bold;
+    }
+    .error {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 20px 0;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+    th {
+      background-color: #3498db;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    .timestamp {
+      color: #7f8c8d;
+      font-size: 0.9em;
+    }
+    .metric {
+      display: inline-block;
+      margin: 10px 20px 10px 0;
+    }
+    .metric-label {
+      color: #7f8c8d;
+      font-size: 0.9em;
+    }
+    .metric-value {
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SAM Proteomics Analysis Report</h1>
+    <p class="timestamp">Generated: 2026-01-02 07:55:32</p>
+    
+    <div class="info-box">
+      <strong>Input Folder:</strong> preprocessing_gpr<br>
+      <strong>Output Folder:</strong> ./sam_results<br>
+      <strong>Files Processed:</strong> 1 / 1
+    </div>
+
+    <h2>Summary Statistics</h2>
+    <div class="info-box">
+
+      <div class="metric">
+        <div class="metric-label">Total Genes</div>
+        <div class="metric-value">4606</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Total Samples</div>
+        <div class="metric-value">7</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Missing Values Imputed</div>
+        <div class="metric-value">0</div>
+      </div>
+    </div>
+
+    <h2>Detailed Results</h2>
+
+    <h3>sam_input.xlsx</h3>
+    <table>
+      <tr>
+        <th>Metric</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td>Response Type</td>
+        <td>Quantitative</td>
+      </tr>
+      <tr>
+        <td>Number of Genes</td>
+        <td>4606</td>
+      </tr>
+      <tr>
+        <td>Number of Samples</td>
+        <td>7</td>
+      </tr>
+      <tr>
+        <td>Missing Values Imputed</td>
+        <td>0</td>
+      </tr>
+      <tr>
+        <td>Analysis Status</td>
+        <td><span class="success">✓ Complete</span></td>
+      </tr>
+    </table>
+  
+    <h4>Delta Table (Significance Thresholds)</h4>
+    <table>
+      <tr>
+        <th>Delta</th>
+        <th>Cutlow</th>
+        <th>Cutup</th>
+        <th>Called</th>
+        <th>FDR</th>
+      </tr>
+    
+      <tr>
+        <td>0.000</td>
+        <td>12.835</td>
+        <td>467.851</td>
+        <td>2001</td>
+        <td>0.006</td>
+      </tr>
+      
+      <tr>
+        <td>0.001</td>
+        <td>12.835</td>
+        <td>467.851</td>
+        <td>2001</td>
+        <td>0.006</td>
+      </tr>
+      
+      <tr>
+        <td>0.005</td>
+        <td>12.835</td>
+        <td>467.851</td>
+        <td>2001</td>
+        <td>0.006</td>
+      </tr>
+      
+      <tr>
+        <td>0.012</td>
+        <td>12.835</td>
+        <td>467.851</td>
+        <td>2001</td>
+        <td>0.006</td>
+      </tr>
+      
+      <tr>
+        <td>0.022</td>
+        <td>12.835</td>
+        <td>467.851</td>
+        <td>2001</td>
+        <td>0.006</td>
+      </tr>
+      
+      <tr>
+        <td>0.034</td>
+        <td>12.835</td>
+        <td>467.851</td>
+        <td>2001</td>
+        <td>0.006</td>
+      </tr>
+      
+      <tr>
+        <td>0.049</td>
+        <td>12.835</td>
+        <td>467.851</td>
+        <td>2001</td>
+        <td>0.006</td>
+      </tr>
+      
+      <tr>
+        <td>0.067</td>
+        <td>12.835</td>
+        <td>467.851</td>
+        <td>2001</td>
+        <td>0.006</td>
+      </tr>
+      
+      <tr>
+        <td>0.087</td>
+        <td>12.835</td>
+        <td>467.851</td>
+        <td>2001</td>
+        <td>0.006</td>
+      </tr>
+      
+      <tr>
+        <td>0.111</td>
+        <td>12.835</td>
+        <td>467.851</td>
+        <td>2001</td>
+        <td>0.006</td>
+      </tr>
+      
+    </table>
+    
+  </div>
+</body>
+</html>
+
