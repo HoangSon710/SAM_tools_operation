@@ -13,6 +13,50 @@ all_results <- read.csv(file.path(output_folder, "sam_input_all_results.csv"))
 pos_hits <- read.csv(file.path(output_folder, "sam_input_positive_hits.csv"))
 neg_hits <- read.csv(file.path(output_folder, "sam_input_negative_hits.csv"))
 
+# Extract sample information from input file
+input_file <- file.path(dirname(output_folder), "preprocessing_gpr", "sam_input.csv")
+if (!file.exists(input_file)) {
+  # Try alternative location
+  input_file <- file.path("preprocessing_gpr", "sam_input.csv")
+}
+
+sample_names <- c()
+exp_samples <- c()
+ctrl_samples <- c()
+n_exp <- 0
+n_ctrl <- 0
+
+if (file.exists(input_file)) {
+  # Read first two rows to get groups and sample names
+  header_data <- read.csv(input_file, header = FALSE, nrows = 2, stringsAsFactors = FALSE)
+  
+  # Extract group labels (row 1, skip first 2 columns which are gene ID/name)
+  groups <- as.numeric(header_data[1, -c(1, 2)])
+  
+  # Get column names from the file header (if present)
+  conn <- file(input_file, "r")
+  first_line <- readLines(conn, n = 1)
+  close(conn)
+  
+  # Parse sample names from column headers
+  col_headers <- strsplit(first_line, ",")[[1]]
+  if (length(col_headers) > 2) {
+    sample_names <- col_headers[-c(1, 2)]  # Remove gene ID and gene name columns
+    sample_names <- gsub('"', '', sample_names)  # Remove quotes
+    
+    # If sample names are empty or just numbers, generate default names
+    if (all(sample_names == "" | grepl("^[0-9.]+$", sample_names))) {
+      sample_names <- paste0("Sample_", seq_along(groups))
+    }
+    
+    # Categorize samples by group
+    exp_samples <- sample_names[groups == 1]
+    ctrl_samples <- sample_names[groups == 2]
+    n_exp <- length(exp_samples)
+    n_ctrl <- length(ctrl_samples)
+  }
+}
+
 # Create HTML
 html_file <- file.path(output_folder, "analysis_report_interactive.html")
 
@@ -58,6 +102,24 @@ cat('<!DOCTYPE html>
     <p><strong>Generated:</strong> ', format(Sys.time(), "%Y-%m-%d %H:%M:%S"), '</p>
     <p><strong>Analysis Method:</strong> SAM (Significance Analysis of Microarrays)</p>
     <p><strong>Parameters:</strong> Delta = ', delta, ' | Min Fold Change = ', min_foldchange, '</p>
+    
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3498db;">
+      <h3 style="margin-top: 0;">📋 Sample Information</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div>
+          <p><strong>Experimental Group (', n_exp, ' samples):</strong></p>
+          <p style="margin-left: 20px; color: #2c5282;">', 
+            if(length(exp_samples) > 0) paste(exp_samples, collapse = ", ") else "No samples", 
+          '</p>
+        </div>
+        <div>
+          <p><strong>Control Group (', n_ctrl, ' samples):</strong></p>
+          <p style="margin-left: 20px; color: #2c5282;">', 
+            if(length(ctrl_samples) > 0) paste(ctrl_samples, collapse = ", ") else "No samples", 
+          '</p>
+        </div>
+      </div>
+    </div>
     
     <div class="filter-panel">
       <h3>🔍 Interactive Filtering</h3>
