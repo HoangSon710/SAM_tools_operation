@@ -1,0 +1,80 @@
+# SAM Proteomics Analysis Pipeline Configuration
+# Edit this file to customize your analysis parameters
+
+# Input/Output Settings
+input:
+  experimental_folder: "example_GPR/experimental_group"  # Folder containing experimental GPR files
+  control_folder: "example_GPR/control_group"           # Folder containing control GPR files
+  preprocessed_folder: "preprocessing_gpr"               # Folder for preprocessed Excel files
+
+output:
+  results_folder: "results"                              # Main output folder
+  timestamp_folders: false                               # Create timestamped subfolders (true/false)
+
+# GPR Preprocessing Settings
+preprocessing:
+  skip_rows: 31                                          # Number of header rows to skip in GPR files
+  imputation_neighbors: 10                               # Number of neighbors for k-NN imputation
+  
+  # Signal column priority (will use first available)
+  signal_columns:
+    - "F650 Median - B650"
+    - "F550 Median - B550"
+    - "F60 Median - B60"
+  
+  # Rows to remove (control/calibration spots)
+  remove_rows:
+    - "Cy3 3x and Cy5 2400x mixture"
+    - "Blank"
+    - "blank"
+    - "Poly-L-lysine"
+    - "BSA"
+    - "Lectin"
+    - "ProteinA"
+    - "empty"
+    - "a-His 1x"
+    - "streptavidin"
+    - "buffer"
+    - "0.96uM proteinG"
+    - "Cy3-Ab andCy5 mixtures x250"
+    - "6.6uM Poly-L-Lysine x50"
+    - "0.0182uM biotin"
+    - "105.48uml nagA"
+    - "13.19uml nagA"
+    - "1687.72uml nagA"
+    - "211uml nagA"
+    - "26.37uml nagA"
+    - "421.93uml nagA"
+    - "52.74uml nagA"
+    - "6.59uml nagA"
+    - "843.86uml nagA"
+
+# Statistical Analysis Settings
+analysis:
+  method: "ttest"                    # Analysis method: "ttest" or "sam"
+  log2fc_cutoff: 1.0                 # Log2 fold change threshold (e.g., 1.0 = 2-fold change)
+  d_value_cutoff: 2.0                # D-value/effect size threshold
+  p_value_cutoff: 0.05               # P-value threshold (for reference)
+  
+  # Group labels
+  experimental_label: 1              # Label for experimental group
+  control_label: 2                   # Label for control group
+
+# Output Settings
+output_format:
+  generate_html: true                # Generate interactive HTML report
+  generate_csv: true                 # Generate CSV files for hits
+  generate_plots: false              # Generate volcano plots (requires ggplot2)
+  
+  # CSV output options
+  csv_options:
+    all_results: true                # Save all results
+    positive_hits: true              # Save positive hits only
+    negative_hits: true              # Save negative hits only
+    significant_only: true           # Save combined significant hits
+
+# Advanced Settings
+advanced:
+  parallel_processing: false         # Use parallel processing (if available)
+  verbose: true                      # Print detailed progress messages
+  save_rdata: true                   # Save R workspace for further analysis
