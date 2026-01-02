@@ -283,6 +283,11 @@ open results/analysis_report_interactive.html
 - **Example Data**: Included in `example_GPR/` folder
 - **Configuration**: See `config.yaml` for all options
 
-## 📄 License
+## � References
+
+- **SAM R Package**: [samr - Significance Analysis of Microarrays](https://cran.r-project.org/web/packages/samr/index.html)
+  - Tusher, V.G., Tibshirani, R. and Chu, G. (2001): Significance analysis of microarrays applied to the ionizing radiation response. PNAS 2001 98, 5116-5121.
+
+## �📄 License
 
 This project is provided for research and educational use.
