@@ -1,15 +1,11 @@
 #!/usr/bin/env Rscript
 
-# SAM Proteomics Pipeline
-# This pipeline processes proteomics data using SAM_proteomics and generates HTML output
+# SAM Proteomics Pipeline with T-test and Interactive HTML
+# This pipeline processes proteomics data and generates interactive HTML output
 
 # Load required libraries
 suppressPackageStartupMessages({
-  library(shiny)
-  library(rmarkdown)
   library(openxlsx)
-  library(samr)
-  library(GSA)
   library(impute)
 })
 
@@ -17,13 +13,18 @@ suppressPackageStartupMessages({
 args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) < 2) {
-  cat("Usage: Rscript sam_pipeline.R <input_folder> <output_folder>\n")
-  cat("Example: Rscript sam_pipeline.R ./data ./output\n")
+  cat("Usage: Rscript sam_pipeline.R <input_folder> <output_folder> [log2fc_cutoff] [d_value_cutoff]\n")
+  cat("Example: Rscript sam_pipeline.R ./data ./output 1.0 2.0\n")
+  cat("\nDefault cutoffs:\n")
+  cat("  log2fc_cutoff: 1.0 (2-fold change)\n")
+  cat("  d_value_cutoff: 2.0 (similar to p-value < 0.05)\n")
   quit(status = 1)
 }
 
 input_folder <- args[1]
 output_folder <- args[2]
+log2fc_cutoff <- ifelse(length(args) >= 3, as.numeric(args[3]), 1.0)
+d_value_cutoff <- ifelse(length(args) >= 4, as.numeric(args[4]), 2.0)
 
 # Create output folder if it doesn't exist
 if (!dir.exists(output_folder)) {
@@ -34,6 +35,8 @@ cat("SAM Proteomics Pipeline\n")
 cat("=======================\n")
 cat(sprintf("Input folder: %s\n", input_folder))
 cat(sprintf("Output folder: %s\n", output_folder))
+cat(sprintf("Log2 Fold Change cutoff: %.2f\n", log2fc_cutoff))
+cat(sprintf("D-value cutoff: %.2f\n", d_value_cutoff))
 cat("\n")
 
 # Find all Excel files in the input folder
