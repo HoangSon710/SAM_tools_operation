@@ -197,7 +197,65 @@ for (file_path in csv_files) {
     write.csv(pos_hits, file.path(output_folder, paste0(tools::file_path_sans_ext(file_name), "_positive_hits.csv")), row.names = FALSE)
     write.csv(neg_hits, file.path(output_folder, paste0(tools::file_path_sans_ext(file_name), "_negative_hits.csv")), row.names = FALSE)
     
-    # Store results including SAM objects
+    # Generate plots for the report
+    cat("  - Generating plots...\n")
+    
+    # 1. Volcano plot (SAM score vs Log2FC)
+    volcano_file <- file.path(output_folder, paste0(tools::file_path_sans_ext(file_name), "_volcano.png"))
+    png(volcano_file, width = 800, height = 600, res = 100)
+    par(mar = c(5, 5, 4, 2))
+    plot(results_df$Log2FC, results_df$SAM_score,
+         pch = 20, col = ifelse(results_df$Significant == "Positive Hit", "#e74c3c",
+                          ifelse(results_df$Significant == "Negative Hit", "#3498db", "#95a5a6")),
+         xlab = "Log2 Fold Change", ylab = "SAM Score",
+         main = paste("Volcano Plot -", file_name),
+         cex = 0.8, cex.lab = 1.2, cex.main = 1.3)
+    abline(h = 0, col = "gray", lty = 2)
+    abline(v = 0, col = "gray", lty = 2)
+    legend("topright", legend = c("Positive Hit", "Negative Hit", "Not Significant"),
+           col = c("#e74c3c", "#3498db", "#95a5a6"), pch = 20, cex = 0.9)
+    dev.off()
+    
+    # 2. SAM plot (Expected vs Observed)
+    sam_plot_file <- file.path(output_folder, paste0(tools::file_path_sans_ext(file_name), "_sam_plot.png"))
+    png(sam_plot_file, width = 800, height = 600, res = 100)
+    par(mar = c(5, 5, 4, 2))
+    samr.plot(samr_obj, delta)
+    dev.off()
+    
+    # 3. Fold change distribution
+    fc_dist_file <- file.path(output_folder, paste0(tools::file_path_sans_ext(file_name), "_fc_distribution.png"))
+    png(fc_dist_file, width = 800, height = 600, res = 100)
+    par(mar = c(5, 5, 4, 2))
+    hist(results_df$Log2FC, breaks = 50, col = "#3498db", border = "white",
+         xlab = "Log2 Fold Change", main = paste("Fold Change Distribution -", file_name),
+         cex.lab = 1.2, cex.main = 1.3)
+    abline(v = 0, col = "#e74c3c", lwd = 2, lty = 2)
+    dev.off()
+    
+    # 4. Top significant genes barplot
+    if (n_total_sig > 0) {
+      top_genes_file <- file.path(output_folder, paste0(tools::file_path_sans_ext(file_name), "_top_genes.png"))
+      sig_genes <- results_df[results_df$Significant != "Not Significant", ]
+      sig_genes <- sig_genes[order(abs(sig_genes$SAM_score), decreasing = TRUE), ]
+      top_n <- min(20, nrow(sig_genes))
+      
+      if (top_n > 0) {
+        png(top_genes_file, width = 1000, height = 600, res = 100)
+        par(mar = c(5, 8, 4, 2))
+        barplot(sig_genes$SAM_score[1:top_n],
+                names.arg = sig_genes$GeneName[1:top_n],
+                horiz = TRUE, las = 1,
+                col = ifelse(sig_genes$SAM_score[1:top_n] > 0, "#e74c3c", "#3498db"),
+                xlab = "SAM Score",
+                main = paste("Top", top_n, "Significant Genes -", file_name),
+                cex.names = 0.8, cex.lab = 1.2, cex.main = 1.3)
+        abline(v = 0, col = "gray", lwd = 2)
+        dev.off()
+      }
+    }
+    
+    # Store results including SAM objects and plot paths
     results[[file_name]] <- list(
       data = results_df,
       positive_hits = pos_hits,
@@ -210,7 +268,13 @@ for (file_path in csv_files) {
       n_samples_ctrl = length(ctrl_idx),
       n_positive = n_positive,
       n_negative = n_negative,
-      n_significant = n_total_sig
+      n_significant = n_total_sig,
+      plots = list(
+        volcano = basename(volcano_file),
+        sam_plot = basename(sam_plot_file),
+        fc_distribution = basename(fc_dist_file),
+        top_genes = if (n_total_sig > 0) basename(top_genes_file) else NULL
+      )
     )
     
     cat(sprintf("  - Analysis complete!\n\n"))
@@ -438,6 +502,45 @@ html_content <- sprintf('
       background-color: #218838;
     }
     
+    /* Plots styling */
+    .plots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 30px;
+      margin: 30px 0;
+    }
+    .plot-item {
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: all 0.3s;
+    }
+    .plot-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .plot-item h4 {
+      margin-top: 0;
+      color: #667eea;
+      font-size: 1.2em;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+    .plot-image {
+      width: 100%%;
+      height: auto;
+      border-radius: 4px;
+      margin: 15px 0;
+    }
+    .plot-caption {
+      font-size: 0.9em;
+      color: #6c757d;
+      font-style: italic;
+      margin: 10px 0 0 0;
+    }
+    
     .timestamp {
       color: #6c757d;
       font-size: 0.9em;
@@ -540,6 +643,26 @@ for (file_name in names(results)) {
       <a href="%s_negative_hits.csv" class="download-btn" download>⬇ Negative Hits</a>
     </div>
     
+    <h3>📊 Visualization Plots</h3>
+    <div class="plots-grid">
+      <div class="plot-item">
+        <h4>Volcano Plot</h4>
+        <img src="%s" alt="Volcano Plot" class="plot-image">
+        <p class="plot-caption">SAM score vs Log2 Fold Change. Red: upregulated, Blue: downregulated.</p>
+      </div>
+      <div class="plot-item">
+        <h4>SAM Plot</h4>
+        <img src="%s" alt="SAM Plot" class="plot-image">
+        <p class="plot-caption">Expected vs Observed SAM scores showing significant genes.</p>
+      </div>
+      <div class="plot-item">
+        <h4>Fold Change Distribution</h4>
+        <img src="%s" alt="FC Distribution" class="plot-image">
+        <p class="plot-caption">Distribution of log2 fold changes across all genes.</p>
+      </div>
+      %s
+    </div>
+    
     <h3>Filter Results</h3>
     <div class="controls">
       <div class="control-group">
@@ -567,10 +690,9 @@ for (file_name in names(results)) {
             <th onclick="sortTable_%s(2)">Mean Exp</th>
             <th onclick="sortTable_%s(3)">Mean Ctrl</th>
             <th onclick="sortTable_%s(4)">Log2 FC</th>
-            <th onclick="sortTable_%s(5)">T-statistic</th>
-            <th onclick="sortTable_%s(6)">P-value</th>
-            <th onclick="sortTable_%s(7)">D-value</th>
-            <th onclick="sortTable_%s(8)">Status</th>
+            <th onclick="sortTable_%s(5)">SAM Score</th>
+            <th onclick="sortTable_%s(6)">Q-value (%%)</th>
+            <th onclick="sortTable_%s(7)">Status</th>
           </tr>
         </thead>
         <tbody>
@@ -580,6 +702,13 @@ for (file_name in names(results)) {
      tools::file_path_sans_ext(file_name),
      tools::file_path_sans_ext(file_name),
      tools::file_path_sans_ext(file_name),
+     result$plots$volcano,
+     result$plots$sam_plot,
+     result$plots$fc_distribution,
+     if (!is.null(result$plots$top_genes)) {
+       sprintf('<div class="plot-item"><h4>Top Significant Genes</h4><img src="%s" alt="Top Genes" class="plot-image"><p class="plot-caption">Top %d most significant genes by SAM score.</p></div>', 
+               result$plots$top_genes, min(20, result$n_significant))
+     } else { "" },
      gsub("[^a-zA-Z0-9]", "_", file_name),
      gsub("[^a-zA-Z0-9]", "_", file_name),
      gsub("[^a-zA-Z0-9]", "_", file_name),
@@ -623,12 +752,12 @@ for (file_name in names(results)) {
             <td>%.2f</td>
             <td><strong>%.3f</strong></td>
             <td>%.3f</td>
-            <td>%.2e</td>
-            <td><strong>%.3f</strong></td>
+            <td>%.2f</td>
             <td><span class="badge %s">%s</span></td>
           </tr>
       ', row_class, row$GeneID, row$GeneName, row$Mean_Exp, row$Mean_Ctrl,
-         row$Log2FC, row$T_statistic, row$P_value, row$D_value,
+         row$Log2FC, row$SAM_score, 
+         ifelse(is.na(row$Q_value), 0, row$Q_value),
          badge_class, row$Significant))
     }
   }
