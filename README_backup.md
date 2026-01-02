@@ -4,7 +4,7 @@ A comprehensive, production-ready pipeline for proteomics differential expressio
 
 [![R](https://img.shields.io/badge/R-4.3+-blue.svg)](https://www.r-project.org/)
 [![Python](https://img.shields.io/badge/Python-3.11+-green.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-Research-orange.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 
 ## 🎯 Overview
 
@@ -12,7 +12,7 @@ This pipeline implements the robust SAM algorithm for identifying differentially
 
 **Key Capabilities:**
 - ✅ Fully automated preprocessing with intelligent data cleaning
-- ✅ Permutation-based SAM statistical testing with FDR control  
+- ✅ Permutation-based SAM statistical testing with FDR control
 - ✅ Multiple imputation methods for missing values (k-NN)
 - ✅ Four types of publication-quality plots (volcano, SAM, fold-change distribution, top genes)
 - ✅ Interactive HTML reports with real-time filtering
@@ -198,6 +198,21 @@ chmod +x install_samr_alternative.sh
 
 </details>
 
+<details>
+<summary><b>Option D: Docker (Coming Soon)</b></summary>
+
+Pre-built Docker image with all dependencies.
+
+```bash
+# Pull image
+docker pull hoangson710/sam-proteomics:latest
+
+# Run analysis
+docker run -v $(pwd)/data:/data hoangson710/sam-proteomics
+```
+
+</details>
+
 ## 📁 Data Preparation
 
 ### Directory Structure
@@ -331,6 +346,70 @@ Statistical significance threshold (before multiple testing correction).
 
 </details>
 
+<details>
+<summary><b>Signal Column Names</b></summary>
+
+Specify the exact column names in your GPR files:
+
+```yaml
+preprocessing:
+  signal_column_exp: "F635 Mean"   # Cy5 channel (red)
+  signal_column_ctrl: "F532 Mean"  # Cy3 channel (green)
+```
+
+**Common alternatives:**
+- `F635 Median` / `F532 Median` (median instead of mean)
+- `F635 Mean - B635` / `F532 Mean - B532` (background-subtracted)
+
+**How to find:** Open a GPR file in a text editor and look at the column headers (usually around row 31-32).
+
+</details>
+
+### Configuration Examples
+
+<details>
+<summary><b>Stringent Analysis (High Confidence)</b></summary>
+
+```yaml
+analysis:
+  log2fc_cutoff: 1.5      # 3-fold change
+  d_value_cutoff: 3.0     # Very large effect size
+  p_value_cutoff: 0.01    # 1% significance
+```
+
+**Result:** Fewer hits, very high confidence
+
+</details>
+
+<details>
+<summary><b>Sensitive Analysis (Exploratory)</b></summary>
+
+```yaml
+analysis:
+  log2fc_cutoff: 0.58     # 1.5-fold change
+  d_value_cutoff: 1.0     # Medium effect size
+  p_value_cutoff: 0.10    # 10% significance
+```
+
+**Result:** More hits, some may be false positives
+
+</details>
+
+<details>
+<summary><b>Custom Data Location</b></summary>
+
+```yaml
+input:
+  experimental_folder: "/data/project_2024/treatment_samples"
+  control_folder: "/data/project_2024/control_samples"
+
+output:
+  results_folder: "results_2024_01_02"
+  add_timestamp: true  # Creates results_2024_01_02_20240102_143022/
+```
+
+</details>
+
 ## 🏃 Running the Analysis
 
 ### Basic Usage
@@ -364,6 +443,16 @@ python run_pipeline.py --skip-analysis
 python run_pipeline.py --config custom.yaml --skip-preprocessing
 ```
 
+### Alternative Shell Scripts
+
+```bash
+# Run SAM pipeline (same as python run_pipeline.py)
+./run_pipeline.sh
+
+# Run T-test pipeline (legacy compatibility)
+./run_ttest_pipeline.sh
+```
+
 ### Expected Runtime
 
 | Dataset Size | Preprocessing | SAM Analysis | Total Time |
@@ -373,6 +462,35 @@ python run_pipeline.py --config custom.yaml --skip-preprocessing
 | Large (10000 genes, 10+10 samples) | 1-2 min | 10-15 min | **~15 min** |
 
 **Note:** SAM uses 1000 permutations by default, which can be time-consuming for large datasets.
+
+### Monitoring Progress
+
+The pipeline provides real-time progress updates:
+
+```
+[INFO] Starting SAM Proteomics Analysis Pipeline
+[INFO] Loading configuration from: config.yaml
+[INFO] Experimental folder: example_GPR/experimental_group
+[INFO] Control folder: example_GPR/control_group
+[INFO] Output folder: ttest_results
+
+[INFO] Preprocessing experimental samples...
+[PROGRESS] Processing 1/4: sample1.gpr
+[PROGRESS] Processing 2/4: sample2.gpr
+...
+
+[INFO] Running SAM analysis...
+[PROGRESS] Performing permutations (1000 iterations)...
+[SUCCESS] SAM analysis complete
+
+[INFO] Generating plots...
+[SUCCESS] Volcano plot saved: ttest_results/volcano_plot.png
+[SUCCESS] SAM plot saved: ttest_results/sam_plot.png
+...
+
+[SUCCESS] Pipeline completed successfully!
+[SUCCESS] Results saved to: ttest_results/
+```
 
 ## 📊 Understanding Results
 
@@ -387,10 +505,10 @@ ttest_results/
 ├── sam_input_all_results.csv          # 📋 Complete analysis results
 ├── sam_input_positive_hits.csv        # ⬆️  Upregulated proteins
 ├── sam_input_negative_hits.csv        # ⬇️  Downregulated proteins
-├── volcano_plot.png                   # 🌋 Volcano plot
-├── sam_plot.png                       # 📈 SAM score plot
-├── foldchange_distribution.png        # 📊 FC histogram
-├── top_genes_barplot.png              # 🏆 Top 20 genes
+├── volcano_plot.png                   # 🌋 Volcano plot (54KB)
+├── sam_plot.png                       # 📈 SAM score plot (41KB)
+├── foldchange_distribution.png        # 📊 FC histogram (25KB)
+├── top_genes_barplot.png              # 🏆 Top 20 genes (19KB)
 └── sam_results.RData                  # 💾 R workspace (for advanced users)
 ```
 
@@ -455,6 +573,8 @@ Tables update instantly to show genes meeting your criteria.
 
 ### CSV File Columns
 
+Each CSV file contains the following columns:
+
 | Column | Description | Example | Range |
 |--------|-------------|---------|-------|
 | `GeneID` | Gene identifier | `ENSG00000139618` | - |
@@ -505,7 +625,23 @@ Tables update instantly to show genes meeting your criteria.
 </details>
 
 <details>
-<summary><b>Example Interpretation</b></summary>
+<summary><b>Fold Change vs Log2FC</b></summary>
+
+**Fold Change (FC):**
+- FC = 2.0 means 2x higher in experimental
+- FC = 0.5 means 2x lower in experimental (50% of control)
+- Always positive
+
+**Log2 Fold Change:**
+- Log2FC = 1.0 means 2x higher (2^1 = 2)
+- Log2FC = -1.0 means 2x lower (2^-1 = 0.5)
+- Can be negative (downregulation) or positive (upregulation)
+
+**Conversion:** `FC = 2^(Log2FC)`
+
+</details>
+
+### Example Interpretation
 
 **Gene: PROTEIN_123**
 - SAM_score: 4.5
@@ -515,8 +651,6 @@ Tables update instantly to show genes meeting your criteria.
 
 **Conclusion:**
 > This protein is **significantly upregulated** in the experimental group. It shows a **4.9-fold increase** (2^2.3) with very **high statistical confidence** (SAM score = 4.5, q-value = 1.2%). This is a **strong candidate** for biological validation.
-
-</details>
 
 ### Quality Control Checks
 
@@ -528,133 +662,109 @@ Before trusting results, verify:
 4. **Q-values:** Should show gradual increase (not all 0% or all 100%)
 5. **Volcano Plot:** Should have balanced upregulation and downregulation (unless biological effect is one-sided)
 
-## 🔧 Troubleshooting
+## � Citation
 
-<details>
-<summary><b>Installation Issues</b></summary>
+If you use this pipeline, please cite the SAM algorithm:
+
+**Tusher VG, Tibshirani R, Chu G.** *Significance analysis of microarrays applied to the ionizing radiation response.* **PNAS** 2001 98(9):5116-21.
+
+## �🔧 Troubleshooting
+
+### Conda Not Found
+
+```bash
+# Install Miniconda
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+
+# Or install Anaconda from https://www.anaconda.com/download
+```
+
+### Conda Environment Issues
+
+```bash
+# Remove and recreate environment
+conda deactivate
+conda env remove -n sam_proteomics
+conda env create -f environment.yml
+
+# List all conda environments
+conda env list
+
+# Activate environment
+conda activate sam_proteomics
+```
+
+### Permission Denied
+
+```bash
+chmod +x setup.sh run_pipeline.py
+```
+
+### Python Not Found or Wrong Version
+
+```bash
+# Check Python version
+python3 --version
+
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install python3 python3-pip
+
+# macOS
+brew install python@3.11
+```
+
+### R Not Found
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install r-base
+
+# macOS
+brew install r
+```
 
 ### R Package Installation Fails
 
-**Error:** `package 'samr' is not available`
+If Bioconductor or CRAN installation fails:
 
-**Solution 1: Use conda (recommended)**
 ```bash
-conda install -c bioconda r-samr
+R
+> install.packages("BiocManager")
+> BiocManager::install("impute")
+> install.packages("samr")
+> quit()
 ```
 
-**Solution 2: Try alternative installation script**
-```bash
-chmod +x install_samr_alternative.sh
-./install_samr_alternative.sh
-```
-
-**Solution 3: Install build dependencies first**
-```bash
-# Ubuntu/Debian
-sudo apt-get update
-sudo apt-get install build-essential gfortran r-base-dev
-
-# macOS
-xcode-select --install
-brew install gcc gfortran
-
-# Then retry
-Rscript install_r_packages.R
-```
+Note: The `samr` package is essential for the SAM algorithm.
 
 ### Python Package Installation Fails
 
 ```bash
-# Upgrade pip first
-pip install --upgrade pip
-
 # Install to user directory
 pip install --user -r requirements.txt
+
+# Or create virtual environment
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-</details>
+### Encoding Errors with GPR Files
 
-<details>
-<summary><b>Runtime Errors</b></summary>
+The pipeline automatically tries multiple encodings (UTF-8, Latin-1, ISO-8859-1, CP1252). If errors persist, check your GPR file format.
 
-### Missing Column Errors
+## 📖 Example Workflow
 
-**Error:** `KeyError: 'F635 Mean'`
-
-**Solution:** Check your GPR files for correct column names:
+**With Conda (Recommended):**
 ```bash
-# View column headers in your GPR file
-head -35 your_file.gpr | tail -5
-
-# Update config.yaml with actual column names
-```
-
-### No Significant Genes Found
-
-**Possible causes:**
-1. Cutoffs too stringent
-2. No biological difference
-3. High variability
-4. Wrong groups
-
-**Solution:** Try more relaxed parameters:
-```yaml
-analysis:
-  log2fc_cutoff: 0.58    # 1.5-fold instead of 2-fold
-  d_value_cutoff: 1.0    # Lower threshold
-```
-
-</details>
-
-<details>
-<summary><b>Getting Help</b></summary>
-
-### Where to Get Help
-
-1. **GitHub Issues:** [Report bugs or ask questions](https://github.com/HoangSon710/SAM_tools_operation/issues)
-2. **SAM Documentation:** [CRAN samr package](https://cran.r-project.org/web/packages/samr/index.html)
-
-### Providing Useful Information
-
-When reporting issues, include:
-- Operating system and version
-- Python version (`python --version`)
-- R version (`R --version`)
-- Error message (full traceback)
-- Configuration file (config.yaml)
-
-</details>
-
-## 📖 Example Workflows
-
-### Workflow 1: Quick Start with Example Data
-
-```bash
-# Clone and setup
-git clone https://github.com/HoangSon710/SAM_tools_operation.git
-cd SAM_tools_operation
-./setup.sh
-
-# Run with example data
-python run_pipeline.py
-
-# View results
-xdg-open ttest_results/analysis_report_interactive.html
-```
-
-**Expected output:**
-- 6 significant genes (4 positive, 2 negative)
-- Runtime: ~2 minutes
-- 4 PNG plots + HTML report
-
-### Workflow 2: Custom Data with Conda
-
-```bash
-# 1. Setup environment
+# 1. Clone and setup
 git clone https://github.com/HoangSon710/SAM_tools_operation.git
 cd SAM_tools_operation
 conda env create -f environment.yml
 conda activate sam_proteomics
+Rscript install_r_packages.R
 
 # 2. Prepare your data
 mkdir -p my_experiment/experimental my_experiment/control
@@ -662,107 +772,48 @@ cp /path/to/experimental/*.gpr my_experiment/experimental/
 cp /path/to/control/*.gpr my_experiment/control/
 
 # 3. Configure analysis
-nano config.yaml
-# Update paths and cutoffs
+nano config.yaml  # Edit paths and cutoffs
 
 # 4. Run pipeline
 python run_pipeline.py
 
-# 5. Review results
-open ttest_results/analysis_report_interactive.html
+# 5. View results
+open results/analysis_report_interactive.html
 ```
 
-## 📚 Advanced Usage
-
-### Customizing SAM Parameters
-
-Edit `sam_pipeline_ttest.R` for advanced control:
-
-```R
-# Line ~180: Adjust number of permutations
-samr.obj <- samr(data = samr.data, resp.type = "Two class unpaired", nperms = 1000)
-# Increase for more accurate FDR: nperms = 5000 or 10000
-
-# Line ~190: Set delta manually
-siggenes.table <- samr.compute.siggenes.table(samr.obj, del = 0.5, data = samr.data, delta.table)
-# Lower delta = more genes, higher delta = fewer genes
-```
-
-### Preprocessing Only
-
+**Without Conda:**
 ```bash
-# Run preprocessing without analysis
-python run_pipeline.py --skip-analysis
+# 1. Clone and setup
+git clone https://github.com/HoangSon710/SAM_tools_operation.git
+cd SAM_tools_operation
+./setup.sh
 
-# Result: Creates sam_input.csv only
-# Use this preprocessed file in R or other tools
+# 2. Prepare your data
+mkdir -p my_experiment/experimental my_experiment/control
+cp /path/to/experimental/*.gpr my_experiment/experimental/
+cp /path/to/control/*.gpr my_experiment/control/
+
+# 3. Configure analysis
+nano config.yaml  # Edit paths and cutoffs
+
+# 4. Run pipeline
+python run_pipeline.py
+
+# 5. View results
+open results/analysis_report_interactive.html
 ```
 
-## 🎓 Citation
+## 🤝 Support
 
-If you use this pipeline in your research, please cite:
+- **Issues**: [GitHub Issues](https://github.com/HoangSon710/SAM_tools_operation/issues)
+- **Example Data**: Included in `example_GPR/` folder
+- **Configuration**: See `config.yaml` for all options
 
-**SAM Algorithm:**
-> Tusher VG, Tibshirani R, Chu G. (2001) *Significance analysis of microarrays applied to the ionizing radiation response.* **PNAS** 98(9):5116-5121. DOI: [10.1073/pnas.091062498](https://doi.org/10.1073/pnas.091062498)
+## � References
 
-**BibTeX:**
-```bibtex
-@article{tusher2001sam,
-  title={Significance analysis of microarrays applied to the ionizing radiation response},
-  author={Tusher, Virginia Goss and Tibshirani, Robert and Chu, Gilbert},
-  journal={Proceedings of the National Academy of Sciences},
-  volume={98},
-  number={9},
-  pages={5116--5121},
-  year={2001},
-  publisher={National Acad Sciences},
-  doi={10.1073/pnas.091062498}
-}
-```
+- **SAM R Package**: [samr - Significance Analysis of Microarrays](https://cran.r-project.org/web/packages/samr/index.html)
+  - Tusher, V.G., Tibshirani, R. and Chu, G. (2001): Significance analysis of microarrays applied to the ionizing radiation response. PNAS 2001 98, 5116-5121.
 
-## 🤝 Contributing
+## �📄 License
 
-Contributions are welcome! To contribute:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-**Areas for contribution:**
-- Additional imputation methods
-- More visualization options
-- Docker containerization
-- Unit tests
-- Documentation improvements
-
-## 📧 Support & Contact
-
-- **Issues:** [GitHub Issues](https://github.com/HoangSon710/SAM_tools_operation/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/HoangSon710/SAM_tools_operation/discussions)
-- **Email:** Open an issue for fastest response
-
-## 📄 License
-
-This project is available for research and educational use. See included example data for testing.
-
-**Dependencies:**
-- `samr` R package: GPL-2 License
-- `impute` Bioconductor package: GPL License
-- Python packages: See requirements.txt for individual licenses
-
-## 🙏 Acknowledgments
-
-- SAM algorithm developers: Virginia Goss Tusher, Robert Tibshirani, and Gilbert Chu
-- R `samr` package maintainers
-- Bioconductor project for `impute` package
-- All contributors to this pipeline
-
----
-
-**Version:** 1.0.0  
-**Last Updated:** January 2, 2026  
-**Maintained by:** HoangSon710
-
-For the latest updates, visit: [https://github.com/HoangSon710/SAM_tools_operation](https://github.com/HoangSon710/SAM_tools_operation)
+This project is provided for research and educational use.
