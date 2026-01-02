@@ -20,18 +20,63 @@ Automated pipeline for proteomics differential expression analysis from GenePix 
 
 ## 🚀 Installation & Setup
 
-### Step 1: Clone Repository
+### Option A: Conda Environment (Recommended)
 
+Using conda provides isolated environment management:
+
+**Quick setup with environment.yml:**
 ```bash
+# Clone repository
 git clone https://github.com/HoangSon710/SAM_tools_operation.git
 cd SAM_tools_operation
+
+# Create conda environment from file
+conda env create -f environment.yml
+conda activate sam_proteomics
+
+# Install R packages
+Rscript install_r_packages.R
+
+# Make scripts executable
+chmod +x run_pipeline.py setup.sh
 ```
 
-### Step 2: Run Automated Setup
+**Or manual conda setup:**
+```bash
+# Clone repository
+git clone https://github.com/HoangSon710/SAM_tools_operation.git
+cd SAM_tools_operation
+
+# Create conda environment
+conda create -n sam_proteomics python=3.11 r-base=4.3 -y
+conda activate sam_proteomics
+
+# Install Python packages
+pip install -r requirements.txt
+
+# Install R packages
+Rscript install_r_packages.R
+
+# Make scripts executable
+chmod +x run_pipeline.py setup.sh
+```
+
+**Activate environment before each use:**
+```bash
+conda activate sam_proteomics
+python run_pipeline.py
+```
+
+### Option B: Automated Setup Script
 
 The setup script will install all required dependencies:
 
 ```bash
+# Clone repository
+git clone https://github.com/HoangSon710/SAM_tools_operation.git
+cd SAM_tools_operation
+
+# Run setup
 chmod +x setup.sh
 ./setup.sh
 ```
@@ -43,7 +88,7 @@ chmod +x setup.sh
 - ✅ Makes all scripts executable
 - ✅ Verifies installation
 
-### Step 3: Manual Setup (Alternative)
+### Option C: Manual Setup
 
 If automated setup fails, install dependencies manually:
 
@@ -196,6 +241,31 @@ Each CSV file contains:
 
 ## 🔧 Troubleshooting
 
+### Conda Not Found
+
+```bash
+# Install Miniconda
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+
+# Or install Anaconda from https://www.anaconda.com/download
+```
+
+### Conda Environment Issues
+
+```bash
+# Remove and recreate environment
+conda deactivate
+conda env remove -n sam_proteomics
+conda env create -f environment.yml
+
+# List all conda environments
+conda env list
+
+# Activate environment
+conda activate sam_proteomics
+```
+
 ### Permission Denied
 
 ```bash
@@ -256,6 +326,31 @@ The pipeline automatically tries multiple encodings (UTF-8, Latin-1, ISO-8859-1,
 
 ## 📖 Example Workflow
 
+**With Conda (Recommended):**
+```bash
+# 1. Clone and setup
+git clone https://github.com/HoangSon710/SAM_tools_operation.git
+cd SAM_tools_operation
+conda env create -f environment.yml
+conda activate sam_proteomics
+Rscript install_r_packages.R
+
+# 2. Prepare your data
+mkdir -p my_experiment/experimental my_experiment/control
+cp /path/to/experimental/*.gpr my_experiment/experimental/
+cp /path/to/control/*.gpr my_experiment/control/
+
+# 3. Configure analysis
+nano config.yaml  # Edit paths and cutoffs
+
+# 4. Run pipeline
+python run_pipeline.py
+
+# 5. View results
+open results/analysis_report_interactive.html
+```
+
+**Without Conda:**
 ```bash
 # 1. Clone and setup
 git clone https://github.com/HoangSon710/SAM_tools_operation.git
