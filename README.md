@@ -83,8 +83,8 @@ chmod +x setup.sh
 
 **What the setup script does:**
 - ✅ Checks for Python 3.8+ and R 4.0+
-- ✅ Installs Python packages: `pandas`, `numpy`, `openpyxl`, `PyYAML`
-- ✅ Installs R packages: `openxlsx`, `impute` (Bioconductor)
+- ✅ Installs Python packages: `pandas`, `numpy`, `PyYAML`
+- ✅ Installs R packages: `impute` (Bioconductor)
 - ✅ Makes all scripts executable
 - ✅ Verifies installation
 
@@ -207,7 +207,7 @@ After running the pipeline, you'll find:
 ```
 results/
 ├── analysis_report_interactive.html    # Main interactive report
-├── sam_input.xlsx                      # Preprocessed data
+├── sam_input.csv                      # Preprocessed data
 ├── sam_input_all_results.csv           # All genes with statistics
 ├── sam_input_positive_hits.csv         # Upregulated genes
 └── sam_input_negative_hits.csv         # Downregulated genes

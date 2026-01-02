@@ -31,7 +31,7 @@ def check_dependencies():
     print("Checking dependencies...")
     
     # Check Python packages
-    required_python = ['pandas', 'numpy', 'openpyxl', 'yaml']
+    required_python = ['pandas', 'numpy', 'yaml']
     missing_python = []
     
     for package in required_python:
@@ -75,7 +75,7 @@ def run_preprocessing(config):
         'python', 'preprocessing_gpr/preprocess_gpr.py',
         '--experimental', exp_folder,
         '--control', ctrl_folder,
-        '--output', os.path.join(output_folder, 'sam_input.xlsx')
+        '--output', os.path.join(output_folder, 'sam_input.csv')
     ]
     
     print(f"Running: {' '.join(cmd)}")

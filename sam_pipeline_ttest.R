@@ -5,7 +5,6 @@
 
 # Load required libraries
 suppressPackageStartupMessages({
-  library(openxlsx)
   library(impute)
 })
 
@@ -39,30 +38,30 @@ cat(sprintf("Log2 Fold Change cutoff: %.2f\n", log2fc_cutoff))
 cat(sprintf("D-value cutoff: %.2f\n", d_value_cutoff))
 cat("\n")
 
-# Find all Excel files in the input folder
-excel_files <- list.files(input_folder, pattern = "\\.(xlsx|xls)$", full.names = TRUE)
+# Find all CSV files in the input folder
+csv_files <- list.files(input_folder, pattern = "\\.csv$", full.names = TRUE)
 
-if (length(excel_files) == 0) {
-  cat("Error: No Excel files found in the input folder.\n")
+if (length(csv_files) == 0) {
+  cat("Error: No CSV files found in the input folder.\n")
   quit(status = 1)
 }
 
-cat(sprintf("Found %d Excel file(s) to process:\n", length(excel_files)))
-for (f in excel_files) {
+cat(sprintf("Found %d CSV file(s) to process:\n", length(csv_files)))
+for (f in csv_files) {
   cat(sprintf("  - %s\n", basename(f)))
 }
 cat("\n")
 
-# Process each Excel file
+# Process each CSV file
 results <- list()
 
-for (file_path in excel_files) {
+for (file_path in csv_files) {
   file_name <- basename(file_path)
   cat(sprintf("Processing: %s\n", file_name))
   
   tryCatch({
     # Read data
-    dat <- read.xlsx(file_path, 1, colNames = FALSE)
+    dat <- read.csv(file_path, header = FALSE, stringsAsFactors = FALSE)
     
     # Extract gene information
     geneid <- dat[-1, 1]

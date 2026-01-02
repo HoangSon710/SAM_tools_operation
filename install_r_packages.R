@@ -7,7 +7,7 @@ cat("Installing R packages for SAM Proteomics Pipeline\n")
 cat("==================================================\n\n")
 
 # Required packages
-required_packages <- c("openxlsx")
+required_packages <- c()
 bioc_packages <- c("impute")
 
 # Install CRAN packages

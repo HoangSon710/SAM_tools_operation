@@ -188,7 +188,7 @@ def create_sam_input(experimental_dfs, control_dfs, output_path):
     Args:
         experimental_dfs: List of DataFrames with experimental group data (one per file)
         control_dfs: List of DataFrames with control group data (one per file)
-        output_path: Path to save the output Excel file
+        output_path: Path to save the output CSV file
     
     Format:
         First row: Sample labels with group indicators (1 for experimental, 2 for control)
@@ -245,9 +245,9 @@ def create_sam_input(experimental_dfs, control_dfs, output_path):
     # Combine into final DataFrame
     sam_df = pd.DataFrame([header_row] + data_rows)
     
-    # Save to Excel
+    # Save to CSV
     print(f"Saving to {output_path}...")
-    sam_df.to_excel(output_path, index=False, header=False)
+    sam_df.to_csv(output_path, index=False, header=False)
     
     print(f"✓ SAM input file created successfully!")
     print(f"  Total proteins/features: {len(data_rows)}")
@@ -261,22 +261,29 @@ def main():
     """Main function to run the preprocessing pipeline."""
     parser = argparse.ArgumentParser(description='Preprocess GPR files for SAM analysis')
     parser.add_argument('--experimental', type=str, 
-                       default='../example_GPR/experimental_group',
+                       default='example_GPR/experimental_group',
                        help='Path to experimental group folder')
     parser.add_argument('--control', type=str,
-                       default='../example_GPR/control_group',
+                       default='example_GPR/control_group',
                        help='Path to control group folder')
     parser.add_argument('--output', type=str,
-                       default='./sam_input.xlsx',
-                       help='Output Excel file path')
+                       default='./sam_input.csv',
+                       help='Output CSV file path')
     
     args = parser.parse_args()
     
     # Convert to absolute paths
+    # If paths are relative, resolve from workspace root (parent of script directory)
     script_dir = Path(__file__).parent
-    exp_dir = (script_dir / args.experimental).resolve()
-    ctrl_dir = (script_dir / args.control).resolve()
-    output_path = (script_dir / args.output).resolve()
+    workspace_root = script_dir.parent
+    
+    exp_path = Path(args.experimental)
+    ctrl_path = Path(args.control)
+    out_path = Path(args.output)
+    
+    exp_dir = exp_path if exp_path.is_absolute() else (workspace_root / exp_path).resolve()
+    ctrl_dir = ctrl_path if ctrl_path.is_absolute() else (workspace_root / ctrl_path).resolve()
+    output_path = out_path if out_path.is_absolute() else (workspace_root / out_path).resolve()
     
     print("="*60)
     print("GPR Preprocessing for SAM Analysis")

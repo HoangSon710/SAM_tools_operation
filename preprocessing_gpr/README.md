@@ -4,7 +4,7 @@ This folder contains scripts to preprocess GenePix Results (.gpr) files for SAM 
 
 ## Overview
 
-The preprocessing script reads GPR files from experimental and control groups, cleans the data, averages technical replicates, and generates an Excel file formatted for SAM analysis.
+The preprocessing script reads GPR files from experimental and control groups, cleans the data, averages technical replicates, and generates a CSV file formatted for SAM analysis.
 
 ## Features
 
@@ -13,7 +13,7 @@ The preprocessing script reads GPR files from experimental and control groups, c
 - ✅ Removes control/calibration spots (blanks, BSA, lectins, etc.)
 - ✅ Averages technical replicates for each protein
 - ✅ Combines multiple files from each group
-- ✅ Generates SAM-compatible Excel format with group labels
+- ✅ Generates SAM-compatible CSV format with group labels
 
 ## Requirements
 
@@ -34,7 +34,7 @@ cd preprocessing_gpr
 python preprocess_gpr.py
 ```
 
-This will create `sam_input.xlsx` in the current directory.
+This will create `sam_input.csv` in the current directory.
 
 ### Custom Paths
 

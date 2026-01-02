@@ -4,7 +4,7 @@ This pipeline automates the processing of proteomics data using the SAM (Signifi
 
 ## Features
 
-- **Automated Input Processing**: Processes all Excel files (.xlsx, .xls) in the input folder
+- **Automated Input Processing**: Processes all CSV files (.csv) in the input folder
 - **Missing Value Imputation**: Automatically handles missing data using k-nearest neighbors imputation
 - **SAM Analysis**: Performs statistical analysis to identify differentially expressed proteins
 - **HTML Report Generation**: Creates a comprehensive, interactive HTML report with:
@@ -23,7 +23,7 @@ This pipeline automates the processing of proteomics data using the SAM (Signifi
 The pipeline will automatically install missing packages, but you can install them manually:
 
 ```r
-install.packages(c("shiny", "openxlsx", "samr", "GSA"))
+install.packages(c("shiny", "samr", "GSA"))
 
 # Install Bioconductor packages
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -34,7 +34,7 @@ BiocManager::install("impute")
 
 ## Input Data Format
 
-Your Excel files should be formatted as follows:
+Your CSV files should be formatted as follows:
 
 | Gene ID | Gene Name | Sample1 | Sample2 | Sample3 | ... |
 |---------|-----------|---------|---------|---------|-----|
@@ -49,8 +49,8 @@ Your Excel files should be formatted as follows:
 ### Example Input Files
 
 See the `SAM_proteomics/Data examples/` folder for example datasets:
-- `Two Class.xlsx`: Example of two-class comparison
-- `Paired Sequencing.xlsx`: Example of paired data
+- `Two Class.csv`: Example of two-class comparison
+- `Paired Sequencing.csv`: Example of paired data
 
 ## Usage
 
@@ -101,7 +101,7 @@ The pipeline generates the following files in the output folder:
 ```
 Input Folder
     ↓
-[1] Load Excel files
+[1] Load CSV files
     ↓
 [2] Extract gene info & expression data
     ↓
@@ -134,7 +134,7 @@ To modify the pipeline behavior, edit `sam_pipeline.R`:
    # Add to beginning of sam_pipeline.R
    options(java.parameters = "-Xmx8g")
    ```
-3. **Excel file format**: Ensure files are in .xlsx or .xls format
+3. **CSV file format**: Ensure files are in .csv format
 
 ### Getting Help
 
@@ -152,17 +152,17 @@ SAM Proteomics Pipeline
 Input folder: ./data
 Output folder: ./output
 
-Found 2 Excel file(s) to process:
-  - Two Class.xlsx
-  - Paired Sequencing.xlsx
+Found 2 CSV file(s) to process:
+  - Two Class.csv
+  - Paired Sequencing.csv
 
-Processing: Two Class.xlsx
+Processing: Two Class.csv
   - Imputing 5 missing values...
   - Detected response type: Two class unpaired
   - Running SAM analysis...
   - Analysis complete! (5000 genes, 20 samples)
 
-Processing: Paired Sequencing.xlsx
+Processing: Paired Sequencing.csv
   - Detected response type: Two class paired
   - Running SAM analysis...
   - Analysis complete! (3000 genes, 16 samples)

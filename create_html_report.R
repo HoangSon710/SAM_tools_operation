@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 # Simple HTML Report Generator
-library(openxlsx)
+# No additional libraries needed - uses base R
 
 args <- commandArgs(trailingOnly = TRUE)
 output_folder <- args[1]

@@ -5,7 +5,7 @@
 input:
   experimental_folder: "example_GPR/experimental_group"  # Folder containing experimental GPR files
   control_folder: "example_GPR/control_group"           # Folder containing control GPR files
-  preprocessed_folder: "preprocessing_gpr"               # Folder for preprocessed Excel files
+  preprocessed_folder: "preprocessing_gpr"               # Folder for preprocessed CSV files
 
 output:
   results_folder: "results"                              # Main output folder
