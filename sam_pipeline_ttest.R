@@ -1,41 +1,42 @@
 #!/usr/bin/env Rscript
 
-# SAM Proteomics Pipeline with T-test and Interactive HTML
-# This pipeline processes proteomics data and generates interactive HTML output
+# SAM Proteomics Pipeline - Significance Analysis of Microarrays
+# This pipeline processes proteomics data using the SAM algorithm and generates interactive HTML output
 
 # Load required libraries
 suppressPackageStartupMessages({
   library(impute)
+  library(samr)
 })
 
 # Parse command line arguments
 args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) < 2) {
-  cat("Usage: Rscript sam_pipeline_ttest.R <input_folder> <output_folder> [log2fc_cutoff] [d_value_cutoff]\n")
-  cat("Example: Rscript sam_pipeline_ttest.R ./data ./output 1.0 2.0\n")
+  cat("Usage: Rscript sam_pipeline_ttest.R <input_folder> <output_folder> [delta] [min_foldchange]\n")
+  cat("Example: Rscript sam_pipeline_ttest.R ./data ./output 0.5 1.5\n")
   cat("\nDefault cutoffs:\n")
-  cat("  log2fc_cutoff: 1.0 (2-fold change)\n")
-  cat("  d_value_cutoff: 2.0\n")
+  cat("  delta: 0.5 (SAM significance threshold)\n")
+  cat("  min_foldchange: 1.5 (minimum fold change)\n")
   quit(status = 1)
 }
 
 input_folder <- args[1]
 output_folder <- args[2]
-log2fc_cutoff <- ifelse(length(args) >= 3, as.numeric(args[3]), 1.0)
-d_value_cutoff <- ifelse(length(args) >= 4, as.numeric(args[4]), 2.0)
+delta <- ifelse(length(args) >= 3, as.numeric(args[3]), 0.5)
+min_foldchange <- ifelse(length(args) >= 4, as.numeric(args[4]), 1.5)
 
 # Create output folder if it doesn't exist
 if (!dir.exists(output_folder)) {
   dir.create(output_folder, recursive = TRUE)
 }
 
-cat("SAM Proteomics Pipeline with T-test\n")
-cat("====================================\n")
+cat("SAM Proteomics Pipeline - Significance Analysis of Microarrays\n")
+cat("===============================================================\n")
 cat(sprintf("Input folder: %s\n", input_folder))
 cat(sprintf("Output folder: %s\n", output_folder))
-cat(sprintf("Log2 Fold Change cutoff: %.2f\n", log2fc_cutoff))
-cat(sprintf("D-value cutoff: %.2f\n", d_value_cutoff))
+cat(sprintf("Delta threshold: %.2f\n", delta))
+cat(sprintf("Minimum fold change: %.2f\n", min_foldchange))
 cat("\n")
 
 # Find all CSV files in the input folder
@@ -93,8 +94,8 @@ for (file_path in csv_files) {
       next
     }
     
-    # Perform T-test and calculate statistics
-    cat("  - Performing T-test analysis...\n")
+    # Perform SAM analysis
+    cat("  - Running SAM analysis (100 permutations)...\n")
     
     n_genes <- nrow(x)
     results_df <- data.frame(
@@ -163,14 +164,24 @@ for (file_path in csv_files) {
       )
     }
     
-    # Count significant hits
+    # Count significant hits from SAM
     n_positive <- sum(results_df$Significant == "Positive Hit", na.rm = TRUE)
     n_negative <- sum(results_df$Significant == "Negative Hit", na.rm = TRUE)
     n_total_sig <- n_positive + n_negative
     
-    cat(sprintf("  - Total significant hits: %d\n", n_total_sig))
-    cat(sprintf("  - Positive hits (upregulated): %d\n", n_positive))
-    cat(sprintf("  - Negative hits (downregulated): %d\n", n_negative))
+    # Get median FDR
+    median_fdr <- if (n_total_sig > 0) {
+      median(results_df$Q_value[results_df$Significant != "Not Significant"], na.rm = TRUE)
+    } else {
+      NA
+    }
+    
+    cat(sprintf("  - Total significant genes (SAM delta=%.2f): %d\n", delta, n_total_sig))
+    cat(sprintf("  - Upregulated genes: %d\n", n_positive))
+    cat(sprintf("  - Downregulated genes: %d\n", n_negative))
+    if (!is.na(median_fdr)) {
+      cat(sprintf("  - Median FDR: %.2f%%\n", median_fdr))
+    }
     
     # Save individual results to CSV
     pos_hits <- results_df[results_df$Significant == "Positive Hit", ]
@@ -181,12 +192,15 @@ for (file_path in csv_files) {
     write.csv(pos_hits, file.path(output_folder, paste0(tools::file_path_sans_ext(file_name), "_positive_hits.csv")), row.names = FALSE)
     write.csv(neg_hits, file.path(output_folder, paste0(tools::file_path_sans_ext(file_name), "_negative_hits.csv")), row.names = FALSE)
     
-    # Store results
+    # Store results including SAM objects
     results[[file_name]] <- list(
       data = results_df,
       positive_hits = pos_hits,
       negative_hits = neg_hits,
       n_genes = nrow(x),
+      samr_obj = samr_obj,
+      delta_table = delta_table,
+      median_fdr = median_fdr,
       n_samples_exp = length(exp_idx),
       n_samples_ctrl = length(ctrl_idx),
       n_positive = n_positive,
@@ -701,10 +715,19 @@ html_content <- paste0(html_content, '
 writeLines(html_content, html_output)
 
 # Save R data object with all results
-rdata_output <- file.path(output_folder, "analysis_results.RData")
-save(results, log2fc_cutoff, d_value_cutoff, file = rdata_output)
+rdata_output <- file.path(output_folder, "sam_analysis_results.RData")
+save(results, delta, min_foldchange, file = rdata_output)
 
-cat(sprintf("\n✓ Pipeline complete!\n"))
+cat(sprintf("\n✓ SAM Pipeline complete!\n"))
 cat(sprintf("  - Interactive HTML report: %s\n", html_output))
 cat(sprintf("  - R data: %s\n", rdata_output))
 cat(sprintf("  - CSV files saved for each dataset\n"))
+cat(sprintf("\nSAM Analysis Summary:\n"))
+cat(sprintf("  - Delta threshold: %.2f\n", delta))
+cat(sprintf("  - Minimum fold change: %.2f\n", min_foldchange))
+cat(sprintf("  - Permutations: 100\n"))
+cat(sprintf("  - CSV files saved for each dataset\n"))
+cat(sprintf("\nSAM Analysis Summary:\n"))
+cat(sprintf("  - Delta threshold: %.2f\n", delta))
+cat(sprintf("  - Minimum fold change: %.2f\n", min_foldchange))
+cat(sprintf("  - Permutations: 100\n"))

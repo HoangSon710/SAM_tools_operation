@@ -1,12 +1,12 @@
 #!/usr/bin/env Rscript
 
-# Simple HTML Report Generator
-# No additional libraries needed - uses base R
+# SAM Analysis HTML Report Generator
+# Generates interactive HTML reports for SAM (Significance Analysis of Microarrays) results
 
 args <- commandArgs(trailingOnly = TRUE)
 output_folder <- args[1]
-log2fc_cutoff <- as.numeric(args[2])
-d_value_cutoff <- as.numeric(args[3])
+delta <- as.numeric(args[2])
+min_foldchange <- as.numeric(args[3])
 
 # Read the CSV files
 all_results <- read.csv(file.path(output_folder, "sam_input_all_results.csv"))
@@ -54,9 +54,10 @@ cat('<!DOCTYPE html>
 </head>
 <body>
   <div class="container">
-    <h1>🔬 T-test Proteomics Analysis Report</h1>
+    <h1>🔬 SAM Proteomics Analysis Report</h1>
     <p><strong>Generated:</strong> ', format(Sys.time(), "%Y-%m-%d %H:%M:%S"), '</p>
-    <p><strong>Analysis Cutoffs:</strong> Log2 FC ≥ ±', log2fc_cutoff, ' | D-value ≥ ±', d_value_cutoff, '</p>
+    <p><strong>Analysis Method:</strong> SAM (Significance Analysis of Microarrays)</p>
+    <p><strong>Parameters:</strong> Delta = ', delta, ' | Min Fold Change = ', min_foldchange, '</p>
     
     <div class="filter-panel">
       <h3>🔍 Interactive Filtering</h3>

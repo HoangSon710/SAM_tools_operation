@@ -103,8 +103,8 @@ def run_analysis(config):
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         output_folder = os.path.join(output_folder, timestamp)
     
-    log2fc = config['analysis']['log2fc_cutoff']
-    d_value = config['analysis']['d_value_cutoff']
+    log2fc = config['analysis'].get('log2fc_cutoff', config['analysis'].get('delta', 0.5))
+    d_value = config['analysis'].get('d_value_cutoff', config['analysis'].get('min_foldchange', 1.5))
     
     # Run R analysis script
     cmd = [

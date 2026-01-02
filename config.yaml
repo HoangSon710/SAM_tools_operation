@@ -51,10 +51,11 @@ preprocessing:
 
 # Statistical Analysis Settings
 analysis:
-  method: "ttest"                    # Analysis method: "ttest" or "sam"
-  log2fc_cutoff: 1.0                 # Log2 fold change threshold (e.g., 1.0 = 2-fold change)
-  d_value_cutoff: 2.0                # D-value/effect size threshold
+  method: "sam"                     # Analysis method: "sam" (Significance Analysis of Microarrays)
+  delta: 0.5                         # SAM delta threshold (lower = more stringent)
+  min_foldchange: 1.5                # Minimum fold change threshold
   p_value_cutoff: 0.05               # P-value threshold (for reference)
+  nperms: 100                        # Number of permutations for SAM
   
   # Group labels
   experimental_label: 1              # Label for experimental group

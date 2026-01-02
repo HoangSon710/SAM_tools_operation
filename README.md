@@ -1,13 +1,13 @@
 # SAM Proteomics Analysis Pipeline
 
-Automated pipeline for proteomics differential expression analysis from GenePix Results (GPR) files. Performs T-test statistical analysis with interactive visualization and customizable cutoffs.
+Automated pipeline for proteomics differential expression analysis from GenePix Results (GPR) files using **SAM (Significance Analysis of Microarrays)** algorithm with interactive visualization and customizable parameters.
 
 ## ✨ Features
 
 - 🔬 **GPR File Processing**: Automatic preprocessing with encoding detection and k-NN imputation
-- 📊 **T-test Analysis**: Statistical testing with Log2 fold change and effect size (D-value)
-- 🎨 **Interactive Visualizations**: Volcano plot, MA plot, and D-value distribution
-- 🔍 **Dynamic Filtering**: Real-time filtering by Log2FC, D-value, and P-value
+- 📊 **SAM Analysis**: Permutation-based statistical testing with FDR control
+- 🎨 **Interactive Visualizations**: Volcano plot, MA plot, and SAM score distribution
+- 🔍 **Dynamic Filtering**: Real-time filtering by fold change and q-values
 - 📈 **HTML Reports**: Interactive tables with sorting, searching, and export
 - ⚙️ **Configurable**: Easy setup via YAML configuration file
 
@@ -84,7 +84,7 @@ chmod +x setup.sh
 **What the setup script does:**
 - ✅ Checks for Python 3.8+ and R 4.0+
 - ✅ Installs Python packages: `pandas`, `numpy`, `PyYAML`
-- ✅ Installs R packages: `impute` (Bioconductor)
+- ✅ Installs R packages: `samr`, `impute` (Bioconductor)
 - ✅ Makes all scripts executable
 - ✅ Verifies installation
 
@@ -233,13 +233,19 @@ Each CSV file contains:
 - `GeneName`: Gene name
 - `Mean_Exp`: Mean expression (experimental group)
 - `Mean_Ctrl`: Mean expression (control group)
+- `FoldChange`: Fold change (not log-transformed)
 - `Log2FC`: Log2 fold change
-- `T_statistic`: T-test statistic
-- `P_value`: Statistical significance
-- `D_value`: Effect size (Cohen's d-like)
+- `SAM_score`: SAM test statistic
+- `Q_value`: False Discovery Rate (q-value, %)
 - `Significance`: Classification (Positive/Negative/Not Significant)
 
-## 🔧 Troubleshooting
+## � Citation
+
+If you use this pipeline, please cite the SAM algorithm:
+
+**Tusher VG, Tibshirani R, Chu G.** *Significance analysis of microarrays applied to the ionizing radiation response.* **PNAS** 2001 98(9):5116-21.
+
+## �🔧 Troubleshooting
 
 ### Conda Not Found
 
@@ -298,15 +304,17 @@ brew install r
 
 ### R Package Installation Fails
 
-If Bioconductor installation fails:
+If Bioconductor or CRAN installation fails:
 
 ```bash
 R
 > install.packages("BiocManager")
 > BiocManager::install("impute")
-> install.packages("openxlsx")
+> install.packages("samr")
 > quit()
 ```
+
+Note: The `samr` package is essential for the SAM algorithm.
 
 ### Python Package Installation Fails
 
