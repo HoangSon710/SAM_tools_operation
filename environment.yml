@@ -6,6 +6,8 @@ channels:
 dependencies:
   - python=3.11
   - r-base=4.3
+  - r-samr
+  - bioconductor-impute
   - pip
   - pip:
       - pandas>=2.0.0

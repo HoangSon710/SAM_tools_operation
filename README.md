@@ -48,14 +48,14 @@ git clone https://github.com/HoangSon710/SAM_tools_operation.git
 cd SAM_tools_operation
 
 # Create conda environment
-conda create -n sam_proteomics python=3.11 r-base=4.3 -y
+conda create -n sam_proteomics python=3.11 r-base=4.3 r-samr bioconductor-impute -c conda-forge -c bioconda -y
 conda activate sam_proteomics
 
 # Install Python packages
 pip install -r requirements.txt
 
-# Install R packages
-Rscript install_r_packages.R
+# Verify R packages are installed
+Rscript -e 'library(samr); library(impute); cat("✓ Packages loaded!\n")'
 
 # Make scripts executable
 chmod +x run_pipeline.py setup.sh
@@ -100,6 +100,27 @@ pip install -r requirements.txt
 **Install R packages:**
 ```bash
 Rscript install_r_packages.R
+```
+
+**If samr installation fails, try alternative methods:**
+```bash
+# Method 1: Run alternative installation script (tries 5 different methods)
+./install_samr_alternative.sh
+
+# Method 2: Manual R installation
+R
+> install.packages("samr")
+> # Or try BiocManager
+> BiocManager::install("samr")
+
+# Method 3: Install from source
+wget https://cran.r-project.org/src/contrib/samr_3.0.tar.gz
+R CMD INSTALL samr_3.0.tar.gz
+
+# Method 4: Ensure build tools are installed first
+# Ubuntu/Debian:
+sudo apt-get install build-essential gfortran r-base-dev
+# Then retry: Rscript install_r_packages.R
 ```
 
 **Make scripts executable:**
