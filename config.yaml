@@ -20,7 +20,6 @@ preprocessing:
   signal_columns:
     - "F650 Median - B650"
     - "F550 Median - B550"
-    - "F60 Median - B60"
   
   # Rows to remove (control/calibration spots)
   remove_rows:

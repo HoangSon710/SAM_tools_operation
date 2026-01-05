@@ -274,7 +274,7 @@ Already processed data in SAM-compatible format
 
 ---
 
-### Option A: GPR File Input (Recommended)
+### Step 1: GPR File Input (Recommended)
 
 #### Directory Structure
 
@@ -306,8 +306,7 @@ data/
 - **ID** or **Row**: Protein/gene identifier
 - **Signal columns:** One of the following patterns:
   - `F650 Median - B650` (most common)
-  - `F550 Median - B550`
-  - `F60 Median - B60`
+  - `F550 Median - B550` (most common)
   - `F635 Mean`, `F532 Mean`
   - `F635 Median`, `F532 Median`
 
@@ -363,7 +362,7 @@ preprocessing:
 
 ---
 
-### Option B: CSV File Input (Pre-processed Data)
+### Step 2: CSV File Input (Pre-processed Data)
 
 If you have already preprocessed data or want to provide data directly in SAM format:
 
