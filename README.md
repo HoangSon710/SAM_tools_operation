@@ -30,6 +30,67 @@ This pipeline implements the robust SAM algorithm for identifying differentially
 
 **Citation:** Tusher VG, Tibshirani R, Chu G. *Significance analysis of microarrays applied to the ionizing radiation response.* PNAS 2001 98(9):5116-21.
 
+### SAM Web Interface (Optional)
+
+The original SAM tool also provides a web-based GUI via Shiny. To use it:
+
+```r
+# Install required packages
+install.packages(c("matrixStats", "GSA", "shiny", "openxlsx", "Rcpp"))
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("impute")
+install.packages("samr")
+
+# Launch web interface
+library(shiny)
+library(impute)
+runGitHub("SAM", "MikeJSeo")
+```
+
+**Note:** Use Firefox or Chrome as your default browser (IE will not work).
+
+This pipeline provides a **command-line alternative** to the web interface with automated batch processing and publication-ready outputs.
+
+## 📂 Project Structure
+
+```
+SAM_tools_operation/
+├── config.yaml                 # Main configuration file
+├── run_pipeline.py            # Pipeline entry point
+├── setup.sh                   # Automated installation script
+├── environment.yml            # Conda environment specification
+├── requirements.txt           # Python dependencies
+│
+├── scripts/                   # Analysis and utility scripts
+│   ├── sam_pipeline_ttest.R          # Main SAM analysis R script
+│   ├── create_html_report.R          # HTML report generator
+│   ├── install_r_packages.R          # R package installer
+│   ├── install_samr_alternative.sh   # Alternative samr installation
+│   └── preprocessing/                # GPR preprocessing module
+│       ├── preprocess_gpr.py         # GPR file processor
+│       └── sam_input.csv             # Preprocessed data (generated)
+│
+├── data/                      # Data directory
+│   └── examples/                     # Example datasets
+│       └── gpr_files/                # Example GPR files
+│           ├── experimental_group/   # Experimental samples
+│           └── control_group/        # Control samples
+│
+├── reference/                 # Reference materials
+│   └── SAM_original/                 # Original SAM Shiny app
+│       ├── server.R, ui.R            # Web interface code
+│       ├── sam-manual.pdf            # SAM documentation
+│       └── Data examples/            # Additional examples
+│
+└── results/                   # Analysis output (generated)
+    ├── analysis_report_interactive.html
+    ├── sam_input_all_results.csv
+    ├── sam_input_positive_hits.csv
+    ├── sam_input_negative_hits.csv
+    └── *.png (plots)
+```
+
 ## ✨ Features
 
 | Feature | Description |
@@ -37,7 +98,8 @@ This pipeline implements the robust SAM algorithm for identifying differentially
 | **📁 GPR Processing** | Automatic encoding detection (UTF-8, Latin-1, ISO-8859-1), header parsing, quality control |
 | **🧬 Data Preprocessing** | k-NN imputation for missing values, log2 transformation, normalization |
 | **📈 SAM Analysis** | Permutation-based testing (default: 1000 permutations), FDR calculation, q-value estimation |
-| **📊 Visualizations** | Volcano plot, SAM plot, fold-change distribution, top significant genes barplot |
+| **📊 Visualizations** | **Heatmap**, volcano plot, MA plot, D-value distribution - all interactive with Plotly |
+| **🎚️ Real-time Filtering** | **Slider-based filters** that auto-update tables and plots instantly |
 | **🔍 Interactive Reports** | Sortable tables, dynamic filtering, CSV export, responsive design |
 | **⚙️ Configuration** | YAML-based settings, customizable cutoffs, flexible column mapping |
 | **🐍 Multiple Environments** | Conda, virtualenv, or system-wide installation |
@@ -80,8 +142,8 @@ python run_pipeline.py
 
 ```bash
 # Open the interactive HTML report
-open ttest_results/analysis_report_interactive.html  # macOS
-xdg-open ttest_results/analysis_report_interactive.html  # Linux
+open results/analysis_report_interactive.html  # macOS
+xdg-open results/analysis_report_interactive.html  # Linux
 ```
 
 ## 📦 Installation Options
@@ -200,59 +262,166 @@ chmod +x install_samr_alternative.sh
 
 ## 📁 Data Preparation
 
-### Directory Structure
+### Input Data Formats
+
+This pipeline supports **two input formats**:
+
+#### 1. GPR Files (GenePix Results)
+Raw proteomics data from GenePix microarray scanner
+
+#### 2. Preprocessed CSV Files
+Already processed data in SAM-compatible format
+
+---
+
+### Option A: GPR File Input (Recommended)
+
+#### Directory Structure
 
 Organize your GPR files into experimental and control groups:
 
 ```
-your_project/
-├── experimental/
-│   ├── sample_exp_1.gpr
-│   ├── sample_exp_2.gpr
-│   ├── sample_exp_3.gpr
-│   └── sample_exp_4.gpr
-└── control/
-    ├── sample_ctrl_1.gpr
-    ├── sample_ctrl_2.gpr
-    └── sample_ctrl_3.gpr
+data/
+└── examples/
+    └── gpr_files/
+        ├── experimental_group/
+        │   ├── sample_exp_1.gpr
+        │   ├── sample_exp_2.gpr
+        │   ├── sample_exp_3.gpr
+        │   └── sample_exp_4.gpr
+        └── control_group/
+            ├── sample_ctrl_1.gpr
+            ├── sample_ctrl_2.gpr
+            └── sample_ctrl_3.gpr
 ```
 
-### Create Data Folders
+#### GPR File Format Requirements
+
+**Header Structure:**
+- **First 31 rows:** Header information (automatically skipped by pipeline)
+- **Row 32:** Column headers with signal intensity names
+- **Remaining rows:** Data with protein IDs and signal values
+
+**Required Columns (auto-detected):**
+- **ID** or **Row**: Protein/gene identifier
+- **Signal columns:** One of the following patterns:
+  - `F650 Median - B650` (most common)
+  - `F550 Median - B550`
+  - `F60 Median - B60`
+  - `F635 Mean`, `F532 Mean`
+  - `F635 Median`, `F532 Median`
+
+**File Properties:**
+- **Encoding:** UTF-8, Latin-1, ISO-8859-1, or CP1252 (auto-detected)
+- **Format:** Tab-delimited or comma-delimited
+- **Extension:** `.gpr`
+
+**Automatic Preprocessing Features:**
+- ✅ Skips first 31 header rows automatically
+- ✅ Detects and uses appropriate signal columns
+- ✅ Removes control/calibration spots (blanks, BSA, lectins, etc.)
+- ✅ Averages technical replicates for each protein
+- ✅ Handles missing values with k-NN imputation
+- ✅ Combines multiple files from each group
+
+**Control Spots Automatically Removed:**
+- Cy3/Cy5 mixtures
+- Blank spots
+- Poly-L-lysine
+- BSA (Bovine Serum Albumin)
+- Lectin
+- Protein A/G
+- Streptavidin
+- Buffer controls
+- Various calibration controls
+
+#### Create Data Folders
 
 ```bash
 # Create directory structure
-mkdir -p my_experiment/experimental my_experiment/control
+mkdir -p data/my_experiment/experimental data/my_experiment/control
 
 # Copy your GPR files
-cp /path/to/experimental/*.gpr my_experiment/experimental/
-cp /path/to/control/*.gpr my_experiment/control/
+cp /path/to/experimental/*.gpr data/my_experiment/experimental/
+cp /path/to/control/*.gpr data/my_experiment/control/
 ```
 
-### GPR File Requirements
+#### Update Configuration
 
-- **Format:** GenePix Results (GPR) files
-- **Encoding:** UTF-8, Latin-1, ISO-8859-1, or CP1252 (auto-detected)
-- **Structure:** Standard GPR format with header rows
-- **Columns:** Must contain signal intensity columns (e.g., "F635 Mean", "F532 Mean")
+Edit `config.yaml` to point to your GPR folders:
 
-**Supported GPR column names:**
-- `F635 Mean`, `F532 Mean` (default)
-- `F635 Median`, `F532 Median`
-- Custom columns (specify in config.yaml)
+```yaml
+input:
+  experimental_folder: "data/my_experiment/experimental"
+  control_folder: "data/my_experiment/control"
 
-### Example Data
+preprocessing:
+  skip_rows: 31                    # GPR header rows to skip
+  signal_column_exp: "F650 Median - B650"  # Adjust based on your files
+  signal_column_ctrl: "F650 Median - B650"
+```
 
-The repository includes example data for testing:
+---
+
+### Option B: CSV File Input (Pre-processed Data)
+
+If you have already preprocessed data or want to provide data directly in SAM format:
+
+#### CSV Format Requirements
+
+**Structure:**
+```
+| Column 1 | Column 2 | Sample1 | Sample2 | Sample3 | Sample4 |
+|----------|----------|---------|---------|---------|---------|
+| (blank)  | (blank)  | 1       | 1       | 2       | 2       |
+| ID1      | Name1    | 1234.5  | 1189.2  | 890.2   | 912.4   |
+| ID2      | Name2    | 2345.6  | 2398.1  | 1678.3  | 1702.9  |
+```
+
+**Column Requirements:**
+- **Row 1:** Group labels (1 = experimental, 2 = control)
+- **Column 1:** Protein/Gene IDs
+- **Column 2:** Protein/Gene names (can match Column 1)
+- **Column 3+:** Expression values (numerical, one column per sample)
+
+**Guidelines:**
+- Values should be already **log-transformed** or ready for log2 transformation
+- Missing values will be imputed using k-NN algorithm
+- Minimum 3 samples per group recommended (4-5 preferred)
+
+**Example CSV:**
+```csv
+,,1,1,1,2,2,2
+ProteinA,ProteinA,1234.5,1189.2,1256.8,890.2,912.4,875.1
+ProteinB,ProteinB,2345.6,2398.1,2312.4,1678.3,1702.9,1689.5
+ProteinC,ProteinC,567.8,589.3,575.2,1234.5,1198.7,1245.3
+```
+
+#### Using CSV Input
+
+```bash
+# Place your CSV file in the preprocessing directory
+cp my_data.csv scripts/preprocessing/sam_input.csv
+
+# Run with preprocessing skipped (uses existing CSV)
+python run_pipeline.py --skip-preprocessing
+```
+
+---
+
+### Example Data Included
+
+The repository includes example GPR data for testing:
 
 ```
-example_GPR/
+data/examples/gpr_files/
 ├── experimental_group/  # 4 samples
 └── control_group/       # 3 samples
 ```
 
 Run with example data:
 ```bash
-python run_pipeline.py  # Uses config.yaml which points to example_GPR/
+python run_pipeline.py  # Uses config.yaml which points to data/examples/gpr_files/
 ```
 
 ## ⚙️ Configuration
@@ -261,11 +430,11 @@ Edit `config.yaml` to customize your analysis parameters:
 
 ```yaml
 input:
-  experimental_folder: "example_GPR/experimental_group"  # Your experimental samples
-  control_folder: "example_GPR/control_group"            # Your control samples
+  experimental_folder: "data/examples/gpr_files/experimental_group"  # Your experimental samples
+  control_folder: "data/examples/gpr_files/control_group"            # Your control samples
 
 output:
-  results_folder: "ttest_results"  # Where to save results
+  results_folder: "results"  # Where to save results
   add_timestamp: false             # Add timestamp to folder name (true/false)
 
 analysis:
@@ -381,7 +550,7 @@ python run_pipeline.py --config custom.yaml --skip-preprocessing
 After running the pipeline, your results folder contains:
 
 ```
-ttest_results/
+results/
 ├── analysis_report_interactive.html    # 📄 Main interactive report
 ├── sam_input.csv                      # 📊 Preprocessed data matrix
 ├── sam_input_all_results.csv          # 📋 Complete analysis results
@@ -406,41 +575,66 @@ Open `analysis_report_interactive.html` in any web browser for:
 
 #### 2. Interactive Visualizations
 
-**Volcano Plot:**
+**🔥 Heatmap (NEW!):**
+- Top 50 most significant genes by D-value
+- Color-coded expression levels (blue → yellow → red)
+- Sample groups labeled (Experimental vs Control)
+- Interactive hover shows gene, sample, and expression value
+- **Auto-updates with filter changes**
+
+**🌋 Volcano Plot:**
 - X-axis: Log2 Fold Change
 - Y-axis: -log10(P-value)
-- Red points: Upregulated (Log2FC > cutoff)
-- Blue points: Downregulated (Log2FC < -cutoff)
+- Green points: Upregulated (significant)
+- Red points: Downregulated (significant)
 - Gray points: Not significant
+- **Interactive hover with gene details**
 
-**SAM Plot:**
-- X-axis: Expected SAM score
-- Y-axis: Observed SAM score
-- Points above diagonal: Upregulated
-- Points below diagonal: Downregulated
-- Parallel lines: Significance threshold (Δ)
+**📈 MA Plot:**
+- X-axis: Mean Expression (log2 scale)
+- Y-axis: Log2 Fold Change
+- Identifies expression-dependent bias
+- Same color coding as volcano plot
+- **Responsive to filters**
 
-**Fold Change Distribution:**
-- Histogram of all log2 fold changes
-- Shows distribution shape (symmetry, outliers)
-- Helps identify batch effects or bias
+**📊 D-value Distribution:**
+- Histogram of SAM D-values (effect sizes)
+- Shows statistical significance distribution
+- Updates dynamically with filtering
 
-**Top Significant Genes:**
-- Barplot of top 20 genes by |SAM score|
-- Color-coded by direction (red = up, blue = down)
-- Easy identification of strongest candidates
+All plots are fully interactive using Plotly - zoom, pan, and hover for details!
 
-#### 3. Dynamic Filtering
+#### 3. Real-Time Slider Filtering (NEW!)
 
-Adjust thresholds in real-time without rerunning analysis:
+**Auto-Update Feature** - No "Apply" button needed! Just drag and watch results update instantly.
 
-```
-Log2FC: [slider] 0.0 to 5.0
-D-value: [slider] 0.0 to 10.0
-P-value: [slider] 0.0 to 1.0
-```
+**Three Interactive Sliders:**
 
-Tables update instantly to show genes meeting your criteria.
+1. **Min |Log2 FC|** (Range: 0.0 - 5.0)
+   - Filters by minimum absolute fold change
+   - Live value display next to slider
+   - Example: Set to 1.0 for 2-fold change minimum
+   
+2. **Min |D-value|** (Range: 0.0 - 10.0)
+   - Filters by minimum SAM effect size
+   - Live value display next to slider
+   - Example: Set to 2.0 for standard cutoff
+   
+3. **Max P-value** (Range: 0.0 - 1.0)
+   - Filters by maximum statistical significance
+   - Live value display next to slider
+   - Example: Set to 0.05 for 5% significance
+
+**Live Statistics:**
+- Instant count of filtered genes
+- Color-coded positive (▲) and negative (▼) hits
+- No page reload required
+
+**Benefits:**
+- ✅ Explore different cutoffs without rerunning analysis
+- ✅ See impact of filters immediately
+- ✅ All plots and tables update together
+- ✅ One-click reset to original view
 
 #### 4. Sortable & Searchable Tables
 
@@ -639,7 +833,7 @@ cd SAM_tools_operation
 python run_pipeline.py
 
 # View results
-xdg-open ttest_results/analysis_report_interactive.html
+xdg-open results/analysis_report_interactive.html
 ```
 
 **Expected output:**
@@ -657,9 +851,9 @@ conda env create -f environment.yml
 conda activate sam_proteomics
 
 # 2. Prepare your data
-mkdir -p my_experiment/experimental my_experiment/control
-cp /path/to/experimental/*.gpr my_experiment/experimental/
-cp /path/to/control/*.gpr my_experiment/control/
+mkdir -p data/my_experiment/experimental data/my_experiment/control
+cp /path/to/experimental/*.gpr data/my_experiment/experimental/
+cp /path/to/control/*.gpr data/my_experiment/control/
 
 # 3. Configure analysis
 nano config.yaml
@@ -669,7 +863,7 @@ nano config.yaml
 python run_pipeline.py
 
 # 5. Review results
-open ttest_results/analysis_report_interactive.html
+open results/analysis_report_interactive.html
 ```
 
 ## 📚 Advanced Usage

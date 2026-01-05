@@ -134,13 +134,13 @@ else
     esac
     
     # Try standard R installation
-    chmod +x install_r_packages.R
-    if Rscript install_r_packages.R; then
+    chmod +x scripts/install_r_packages.R
+    if Rscript scripts/install_r_packages.R; then
         echo -e "${GREEN}✓ R packages installed${NC}"
     else
         echo -e "${YELLOW}Standard installation failed. Trying alternative methods...${NC}"
-        chmod +x install_samr_alternative.sh
-        ./install_samr_alternative.sh
+        chmod +x scripts/install_samr_alternative.sh
+        ./scripts/install_samr_alternative.sh
     fi
 fi
 
@@ -163,17 +163,18 @@ echo -e "${BLUE}[5/5] Setting up environment...${NC}"
 
 # Make scripts executable
 chmod +x run_pipeline.py 2>/dev/null || true
-chmod +x run_ttest_pipeline.sh 2>/dev/null || true
-chmod +x preprocessing_gpr/preprocess_gpr.py 2>/dev/null || true
-chmod +x sam_pipeline_ttest.R 2>/dev/null || true
-chmod +x create_html_report.R 2>/dev/null || true
+chmod +x scripts/preprocessing/preprocess_gpr.py 2>/dev/null || true
+chmod +x scripts/sam_pipeline_ttest.R 2>/dev/null || true
+chmod +x scripts/create_html_report.R 2>/dev/null || true
+chmod +x scripts/install_r_packages.R 2>/dev/null || true
+chmod +x scripts/install_samr_alternative.sh 2>/dev/null || true
 echo -e "${GREEN}✓ Scripts made executable${NC}"
 
 # Create necessary directories
 mkdir -p results
-mkdir -p preprocessing_gpr
-mkdir -p example_GPR/experimental_group
-mkdir -p example_GPR/control_group
+mkdir -p scripts/preprocessing
+mkdir -p data/examples/gpr_files/experimental_group
+mkdir -p data/examples/gpr_files/control_group
 echo -e "${GREEN}✓ Directories created${NC}"
 
 echo ""
@@ -194,8 +195,8 @@ echo "2. Configure your analysis:"
 echo "   nano config.yaml  # Edit input/output paths and parameters"
 echo ""
 echo "3. Prepare your data:"
-echo "   - Place experimental GPR files in: example_GPR/experimental_group/"
-echo "   - Place control GPR files in: example_GPR/control_group/"
+echo "   - Place experimental GPR files in: data/examples/gpr_files/experimental_group/"
+echo "   - Place control GPR files in: data/examples/gpr_files/control_group/"
 echo ""
 echo "4. Run the pipeline:"
 echo "   python run_pipeline.py"
@@ -204,7 +205,7 @@ echo "5. View results:"
 echo "   Open: results/analysis_report_interactive.html"
 echo ""
 echo -e "${YELLOW}Troubleshooting:${NC}"
-echo "  - If samr installation failed: ./install_samr_alternative.sh"
+echo "  - If samr installation failed: ./scripts/install_samr_alternative.sh"
 echo "  - View README.md for detailed instructions"
 echo "  - Check config.yaml for parameter explanations"
 echo ""

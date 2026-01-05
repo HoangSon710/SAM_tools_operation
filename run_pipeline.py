@@ -72,7 +72,7 @@ def run_preprocessing(config):
     
     # Run preprocessing script
     cmd = [
-        'python', 'preprocessing_gpr/preprocess_gpr.py',
+        'python', 'scripts/preprocessing/preprocess_gpr.py',
         '--experimental', exp_folder,
         '--control', ctrl_folder,
         '--output', os.path.join(output_folder, 'sam_input.csv')
@@ -108,7 +108,7 @@ def run_analysis(config):
     
     # Run R analysis script
     cmd = [
-        'Rscript', 'sam_pipeline_ttest.R',
+        'Rscript', 'scripts/sam_pipeline_ttest.R',
         input_folder, output_folder,
         str(log2fc), str(d_value)
     ]
@@ -126,7 +126,7 @@ def run_analysis(config):
         if csv_files:
             print("Generating interactive HTML report...")
             html_cmd = [
-                'Rscript', 'create_html_report.R',
+                'Rscript', 'scripts/create_html_report.R',
                 output_folder, str(log2fc), str(d_value)
             ]
             subprocess.run(html_cmd)
