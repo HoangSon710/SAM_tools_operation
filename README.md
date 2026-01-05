@@ -307,8 +307,6 @@ data/
 - **Signal columns:** One of the following patterns:
   - `F650 Median - B650` (most common)
   - `F550 Median - B550` (most common)
-  - `F635 Mean`, `F532 Mean`
-  - `F635 Median`, `F532 Median`
 
 **File Properties:**
 - **Encoding:** UTF-8, Latin-1, ISO-8859-1, or CP1252 (auto-detected)
